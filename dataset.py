@@ -102,8 +102,8 @@ class HuMobDatasetTask1Val(Dataset):
             label_x = traj['x'].to_numpy()
             label_y = traj['y'].to_numpy()
 
-            mask_d_start = 60
-            mask_d_end = 74
+            mask_d_start = 14
+            mask_d_end = 25
             need_mask_idx = np.where((d >= mask_d_start) & (d <= mask_d_end))
             input_x[need_mask_idx] = 201
             input_y[need_mask_idx] = 201

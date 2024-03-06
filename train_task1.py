@@ -73,7 +73,7 @@ def task1(args):
                         filemode='w')
     writer = SummaryWriter(tensorboard_log_path)
 
-    task1_dataset_train = HuMobDatasetTask1Train('./data/task1_dataset_kotae.csv')
+    task1_dataset_train = HuMobDatasetTask1Train('./data/train.csv')
     task1_dataloader_train = DataLoader(task1_dataset_train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers)
 
     device = torch.device(f'cuda:{args.cuda}')
