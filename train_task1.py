@@ -74,9 +74,11 @@ def task1(args):
     writer = SummaryWriter(tensorboard_log_path)
 
     task1_dataset_train = HuMobDatasetTask1Train('./data/train.csv')
+    print(task1_dataset_train[0]["time_delta"].shape)
+    print(task1_dataset_train[0]["d"].shape)
     task1_dataloader_train = DataLoader(task1_dataset_train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers)
 
-    device = torch.device(f'cuda:{args.cuda}')
+    device = torch.device('cpu')
     model = LPBERT(args.layers_num, args.heads_num, args.embed_size).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -93,6 +95,9 @@ def task1(args):
             batch['label_x'] = batch['label_x'].to(device)
             batch['label_y'] = batch['label_y'].to(device)
             batch['len'] = batch['len'].to(device)
+
+            print(batch["d"].shape)
+            # print(batch["time_delta"])
 
             output = model(batch['d'], batch['t'], batch['input_x'], batch['input_y'], batch['time_delta'], batch['len'])
             label = torch.stack((batch['label_x'], batch['label_y']), dim=-1)
@@ -118,7 +123,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=200)
-    parser.add_argument('--num_workers', type=int, default=2)
+    parser.add_argument('--num_workers', type=int, default=1)
     parser.add_argument('--embed_size', type=int, default=128)
     parser.add_argument('--layers_num', type=int, default=4)
     parser.add_argument('--heads_num', type=int, default=8)
