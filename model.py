@@ -10,7 +10,7 @@ class DayEmbeddingModel(nn.Module):
         super(DayEmbeddingModel, self).__init__()
 
         self.day_embedding = nn.Embedding(
-            num_embeddings=26+1,
+            num_embeddings=20+1,
             embedding_dim=embed_size,
         )
 
@@ -45,7 +45,7 @@ class LocationXEmbeddingModel(nn.Module):
         super(LocationXEmbeddingModel, self).__init__()
 
         self.location_embedding = nn.Embedding(
-            num_embeddings=202,
+            num_embeddings=878+2,
             embedding_dim=embed_size,
         )
 
@@ -63,7 +63,7 @@ class LocationYEmbeddingModel(nn.Module):
         super(LocationYEmbeddingModel, self).__init__()
 
         self.location_embedding = nn.Embedding(
-            num_embeddings=202,
+            num_embeddings=681+2,
             embedding_dim=embed_size,
         )
 
@@ -80,7 +80,7 @@ class TimedeltaEmbeddingModel(nn.Module):
         super(TimedeltaEmbeddingModel, self).__init__()
 
         self.timedelta_embedding = nn.Embedding(
-            num_embeddings=80,
+            num_embeddings=48,
             embedding_dim=embed_size,
         )
 
@@ -129,12 +129,12 @@ class FFNLayer(nn.Module):
         self.ffn1 = nn.Sequential(
             nn.Linear(embed_size, 16),
             nn.ReLU(),
-            nn.Linear(16, 200),
+            nn.Linear(16, 879),
         )
         self.ffn2 = nn.Sequential(
             nn.Linear(embed_size, 16),
             nn.ReLU(),
-            nn.Linear(16, 200),
+            nn.Linear(16, 879),
         )
 
     def forward(self, input):
@@ -155,6 +155,8 @@ class LPBERT(nn.Module):
     def forward(self, day, time, location_x, location_y, timedelta, len):
         embed = self.embedding_layer(day, time, location_x, location_y, timedelta)
         embed = embed.transpose(0, 1)
+
+        # print(embed)
 
         max_len = day.shape[-1]
         indices = torch.arange(max_len, device=len.device).unsqueeze(0)

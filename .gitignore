@@ -5,6 +5,11 @@ __pycache__/
 tb_log/*
 log/*
 
+**/result/**
+**/log/**
+
+**/checkpoint/**
+
 # C extensions
 *.so
 

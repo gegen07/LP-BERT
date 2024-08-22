@@ -71,22 +71,24 @@ def task1(args):
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filename=os.path.join(log_path, f'{current_time.strftime("%Y_%m_%d_%H_%M_%S")}.txt'),
                         filemode='w')
-    writer = SummaryWriter(tensorboard_log_path)
+    writer = SummaryWriter(tensorboard_log_path)    
 
-    task1_dataset_train = HuMobDatasetTask1Train('./data/train.csv')
-    print(task1_dataset_train[0]["time_delta"].shape)
-    print(task1_dataset_train[0]["d"].shape)
-    task1_dataloader_train = DataLoader(task1_dataset_train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers)
+    task1_dataset_train = HuMobDatasetTask1Train('./notebooks/train.csv')
+    task1_dataloader_train = DataLoader(task1_dataset_train, batch_size=args.batch_size, shuffle=True, collate_fn=collate_fn, num_workers=args.num_workers, pin_memory=True, prefetch_factor=2)
 
-    device = torch.device('cpu')
+    device = torch.device('cuda')
     model = LPBERT(args.layers_num, args.heads_num, args.embed_size).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler =torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     criterion = nn.CrossEntropyLoss()
 
-    for epoch_id in range(args.epochs):
-        for batch_id, batch in enumerate(tqdm(task1_dataloader_train)):
+    from tqdm import trange
+
+    t = trange(1, args.epochs+1)
+
+    for epoch_id in t:
+        for batch_id, batch in enumerate(task1_dataloader_train):
             batch['d'] = batch['d'].to(device)
             batch['t'] = batch['t'].to(device)
             batch['input_x'] = batch['input_x'].to(device)
@@ -96,15 +98,15 @@ def task1(args):
             batch['label_y'] = batch['label_y'].to(device)
             batch['len'] = batch['len'].to(device)
 
-            print(batch["d"].shape)
+            # print(batch["d"].shape)
             # print(batch["time_delta"])
 
             output = model(batch['d'], batch['t'], batch['input_x'], batch['input_y'], batch['time_delta'], batch['len'])
             label = torch.stack((batch['label_x'], batch['label_y']), dim=-1)
 
-            pred_mask = (batch['input_x'] == 201)
-            pred_mask = torch.cat((pred_mask.unsqueeze(-1), pred_mask.unsqueeze(-1)), dim=-1)
+            pred_mask = (batch['input_x'] == 878)
 
+            pred_mask = torch.cat((pred_mask.unsqueeze(-1), pred_mask.unsqueeze(-1)), dim=-1)
             loss = criterion(output[pred_mask], label[pred_mask])
             loss.backward()
             optimizer.step()
@@ -115,6 +117,7 @@ def task1(args):
         scheduler.step()
 
         logging.info(f'epoch: {epoch_id}, loss: {loss.detach().item()}')
+        t.set_postfix(loss=loss.detach().item(), refresh=True)
 
     torch.save(model.state_dict(), os.path.join(checkpoint_path, f'{current_time.strftime("%Y_%m_%d_%H_%M_%S")}.pth'))
 

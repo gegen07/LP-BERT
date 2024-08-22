@@ -14,10 +14,10 @@ def task1(args):
     result_path = 'result/task1'
     os.makedirs(result_path, exist_ok=True)
 
-    task1_dataset_val = HuMobDatasetTask1Val('./data/task1_dataset_kotae.csv')
+    task1_dataset_val = HuMobDatasetTask1Val('./notebooks/test.csv')
     task1_dataloader_val = DataLoader(task1_dataset_val, batch_size=1, num_workers=args.num_workers)
 
-    device = torch.device(f'cuda:{args.cuda}')
+    device = torch.device(f'cpu')
     model = LPBERT(args.layers_num, args.heads_num, args.embed_size).to(device)
     model.load_state_dict(torch.load(args.pth_file, map_location=device))
 
@@ -36,12 +36,13 @@ def task1(args):
             data['label_x'] = data['label_x'].to(device)
             data['label_y'] = data['label_y'].to(device)
             data['len'] = data['len'].to(device)
+            print(data)
 
             output = model(data['d'], data['t'], data['input_x'], data['input_y'], data['time_delta'], data['len'])
             label = torch.stack((data['label_x'], data['label_y']), dim=-1)
 
-            assert torch.all((data['input_x'] == 201) == (data['input_y'] == 201))
-            pred_mask = (data['input_x'] == 201)
+            assert torch.all((data['input_x'] == 878) == (data['input_y'] == 682))
+            pred_mask = (data['input_x'] == 878)
             output = output[pred_mask]
             pred = []
             pre_x, pre_y = -1, -1
@@ -54,10 +55,10 @@ def task1(args):
                 pre_x, pre_y = pred[-1][0].item(), pred[-1][1].item()
 
             pred = torch.stack(pred)
-            generated = torch.cat((data['d'][pred_mask].unsqueeze(-1)-1, data['t'][pred_mask].unsqueeze(-1)-1, pred+1), dim=-1).cpu().tolist()
+            generated = torch.cat((data['d'][pred_mask].unsqueeze(-1), data['t'][pred_mask].unsqueeze(-1), pred+1), dim=-1).cpu().tolist()
             generated = [tuple(x) for x in generated]
 
-            reference = torch.cat((data['d'][pred_mask].unsqueeze(-1)-1, data['t'][pred_mask].unsqueeze(-1)-1, label[pred_mask]+1), dim=-1).cpu().tolist()
+            reference = torch.cat((data['d'][pred_mask].unsqueeze(-1), data['t'][pred_mask].unsqueeze(-1), label[pred_mask]+1), dim=-1).cpu().tolist()
             reference = [tuple(x) for x in reference]
             
             result['generated'].append(generated)
